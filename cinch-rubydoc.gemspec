@@ -2,8 +2,8 @@ Gem::Specification.new do |s|
     s.name = 'cinch-rubydoc'
     s.version = '0.1.0'
     s.license = 'MIT'
-    s.summary = %q(A rubydoc.info matcher for Cinch)
-    s.description = %q(This provides a Cinch plugin to give rubydoc.info links for doc requests)
+    s.summary = %q(A ruby doc matcher for Cinch)
+    s.description = %q(This provides a Cinch plugin to give ruby doc links for doc requests)
     s.authors = [ %q(Thibault `Adædra` Hamel) ]
     s.email = %w[me@adaedra.eu]
     s.files = %w[lib/cinch/rubydoc.rb]
