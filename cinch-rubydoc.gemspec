@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
     s.name = 'cinch-rubydoc'
-    s.version = '0.1.0'
+    s.version = '0.2.0'
     s.license = 'MIT'
     s.summary = %q(A ruby doc matcher for Cinch)
     s.description = %q(This provides a Cinch plugin to give ruby doc links for doc requests)
@@ -10,4 +10,5 @@ Gem::Specification.new do |s|
     s.homepage = 'https://github.com/adaedra/cinch-rubydoc'
 
     s.add_runtime_dependency 'cinch', '~> 2.2'
+    s.add_runtime_dependency 'yard', '~> 0.8'
 end

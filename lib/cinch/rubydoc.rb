@@ -1,68 +1,71 @@
-require 'uri'
-require 'pry'
-require 'pry-byebug'
+require 'yard'
+require 'cgi'
+
 
 module Cinch
     class Rubydoc
         include Cinch::Plugin
-        BASE_URL = 'https://devdocs.io/ruby/'
-        UNSAFE_CHARS = /[^0-9a-zA-Z\$_\.\+!\*'\(\)-]/
+        BASE_URL = 'http://www.rubydoc.info/stdlib'
 
-        match /ri ([\w:-]+)([#.][^:\s]+)?$/
+        match /ri (.+)\z/
 
-        def execute(m, klass, method = nil)
-            real_klass = find_class klass
-            if real_klass.nil?
-                m.reply "I'm sorry, I don't know anything about #{klass}."
-                return
-            end
-
-            type = nil
-            real_method = nil
-            unless method.nil?
-                type = method.slice!(0) == '#' ? :instance : :class
-                real_method = find_method(real_klass, method.to_sym, type)
-
-                if real_method.nil?
-                    m.reply "I'm sorry, I found no #{type} method named #{method} in #{real_klass.name}"
-                    return
-                end
-
-                real_klass = real_method.owner
-                real_klass = real_method.receiver if real_method.owner.name.nil?
-            end
-
-            klass_path = real_klass.name.split('::').map { |n| URI.encode(n, UNSAFE_CHARS).downcase }.join('/')
-            url = URI.join(Rubydoc::BASE_URL, klass_path)
-
-            unless real_method.nil?
-                url.merge!("#method-#{type.to_s[0]}-#{URI.encode(method, UNSAFE_CHARS).gsub(/%/, '-')}")
-            end
-
-            m.reply url.to_s
+        def initialize(*args)
+            super
+            @store = YARD::RegistryStore.new
+            @store.load '.yardoc'
         end
 
-        def find_class(klass)
-            klass_path = klass.split('::')
-            current = Object
-
-            klass_path.each do |e|
-                current = current.const_get(e.to_sym)
+        def execute(m, request)
+            requests = request.split /\s/
+            if requests.count > 3
+                requests = requests[0...3]
             end
 
-            current
-        rescue NameError
-            nil
+            uris = []
+            requests.each do |request|
+                uris << url_for(request)
+            end
+
+            uris.compact!
+            unless uris.empty?
+                m.reply uris.join ", "
+            end
         end
 
-        def find_method(klass, method, type)
-            if type == :class
-                klass.method method
-            else
-                klass.instance_method method
+        private
+
+        def url_for(name)
+            obj = @store[name]
+            if obj.nil? && name.end_with?('.new')
+                obj = @store[name.sub(/\.new\z/, '#initialize')]
             end
-        rescue NameError
-            nil
+
+            if obj.nil?
+                debug "Nothing found for #{name}"
+                return nil
+            end
+
+            section = section_for obj
+            p = "#{BASE_URL}/#{section}/#{path_for obj}"
+            YARD::Registry.clear
+
+            p
+        end
+
+        def section_for(obj)
+            return :core if obj.files.find { |f, _| !f.include?('/') }
+            File.basename(obj.file.split('/', 3)[1], '.rb')
+        end
+
+        def path_for(obj)
+            case obj.type
+            when :method
+                    "#{path_for obj.parent}##{CGI.escape obj.name.to_s}-#{obj.scope}_method"
+            when :constant
+                    "#{path_for obj.parent}##{obj.name}-constant"
+            when :class, :module
+                    obj.path.gsub('::', '/')
+            end
         end
     end
 end
