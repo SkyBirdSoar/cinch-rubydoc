@@ -16,19 +16,20 @@ module Cinch
         end
 
         def execute(m, request)
-            requests = request.split /\s/
+            requests = request.split
             if requests.count > 3
-                requests = requests[0...3]
+                requests = requests.first(3)
             end
 
-            uris = []
-            requests.each do |request|
-                uris << url_for(request)
+            uris = requests.map do |request|
+                url_for(request)
             end
 
             uris.compact!
-            unless uris.empty?
-                m.reply uris.join ", "
+            if uris.empty?
+                m.reply 'No results'
+            else
+                m.reply uris.join ', '
             end
         end
 
@@ -40,20 +41,17 @@ module Cinch
                 obj = @store[name.sub(/\.new\z/, '#initialize')]
             end
 
-            if obj.nil?
+            unless obj
                 debug "Nothing found for #{name}"
                 return nil
             end
 
             section = section_for obj
-            p = "#{BASE_URL}/#{section}/#{path_for obj}"
-            YARD::Registry.clear
-
-            p
+            "#{BASE_URL}/#{section}/#{path_for obj}"
         end
 
         def section_for(obj)
-            return :core if obj.files.find { |f, _| !f.include?('/') }
+            return :core if obj.files.any? { |f, _| !f.include?('/') }
             File.basename(obj.file.split('/', 3)[1], '.rb')
         end
 
