@@ -10,4 +10,4 @@ You also need a local copy of YARD documentation for core and stdlib. You can ge
 
     yardoc -n 'ext/**/*.c' 'lib/**/*.rb' *.c
 
-This will create a `.yardoc` directory that you can copy to the working directory of your bot to be pikced up by the plugin.
+This will create a `.yardoc` directory that you can copy to the working directory of your bot to be picked up by the plugin.
