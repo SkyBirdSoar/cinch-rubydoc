@@ -16,7 +16,7 @@ module Cinch
         end
 
         def execute(m, request)
-            requests = request.split
+            requests = request.split /[ ,]+/
             if requests.count > 3
                 requests = requests.first(3)
             end
